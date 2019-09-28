@@ -11,7 +11,7 @@ namespace JsonConverter
     {
         private static void Main(string[] args)
         {
-            using (StreamReader reader = File.OpenText(@"C:\Users\hugos\Desktop\test.json"))
+            using (StreamReader reader = File.OpenText(@"/home/hugo/Desktop/test.json"))
             {
                 JObject o = (JObject)JToken.ReadFrom(new JsonTextReader(reader));
 

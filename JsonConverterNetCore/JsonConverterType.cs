@@ -21,7 +21,7 @@ namespace JsonConverter
         }
 
 
-        public string ToString()
+       override public string ToString()
         {
 
             return title + ";" + index + ";" + type;
