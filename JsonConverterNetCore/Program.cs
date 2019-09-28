@@ -11,13 +11,13 @@ namespace JsonConverter
     {
         private static void Main(string[] args)
         {
-            using (StreamReader reader = File.OpenText(@"/home/hugo/Desktop/test.json"))
+            using (StreamReader reader = File.OpenText(@"C:\Users\hugos\Desktop\test.json"))
             {
                 JObject o = (JObject)JToken.ReadFrom(new JsonTextReader(reader));
 
                 JToken token = o.SelectToken("$..['/pet/findByStatus'].get");
 
-                List<JsonConverterType> list = JsonConverterJObj(o, "/pet/findByTags", "get");
+                List<JsonConverterType> list = JsonConverterJObj(o, "/pet/findByTags", "get", false);
 
                 foreach (var item in list)
                 {
@@ -35,16 +35,16 @@ namespace JsonConverter
             }
         }
 
-        private static List<JsonConverterType> JsonConverterFilename(String filename, String HttpHeader, String methodToConvert)
+        private static List<JsonConverterType> JsonConverterFilename(String filename, String HttpHeader, String methodToConvert, bool genWithKeysFlag)
         {
             StreamReader reader = File.OpenText(@"C:\Users\hugos\Desktop\test.json");
 
             JObject o = (JObject)JToken.ReadFrom(new JsonTextReader(reader));
 
-            return JsonConverterJObj(o, HttpHeader, methodToConvert);
+            return JsonConverterJObj(o, HttpHeader, methodToConvert, genWithKeysFlag);
         }
 
-        private static List<JsonConverterType> JsonConverterJObj(JObject jObj, string HttpHeader, string methodToConvert)
+        private static List<JsonConverterType> JsonConverterJObj(JObject jObj, string HttpHeader, string methodToConvert, bool genWithKeysFlag)
         {
             StringBuilder builder = new StringBuilder();
 
@@ -67,7 +67,7 @@ namespace JsonConverter
 
                     foreach (JToken item in tokenParameters)
                     {
-                        response.AddRange(PropertiesJSONConverterNoRef(item, jObj));
+                        response.AddRange(PropertiesJSONConverterNoRef(item, jObj, genWithKeysFlag));
                     }
                     return response;
                 }
@@ -81,7 +81,7 @@ namespace JsonConverter
 
                 if (tokenReference != null)
                 {
-                    return PropertiesJSONConverterRef(tokenReference, jObj);
+                    return PropertiesJSONConverterRef(tokenReference, jObj, genWithKeysFlag);
                 }
                 else
                 {
@@ -94,16 +94,16 @@ namespace JsonConverter
             }
         }
 
-        private static List<JsonConverterType> PropertiesJSONConverterNoRef(JToken token, JObject root)
+        private static List<JsonConverterType> PropertiesJSONConverterNoRef(JToken token, JObject root, bool genWithKeysFlag)
         {
             List<JsonConverterType> list = new List<JsonConverterType>();
 
-            PropertiesJSONConverterRec(token, root, list, "");
+            PropertiesJSONConverterRec(token, root, list, "", genWithKeysFlag);
 
             return list;
         }
 
-        private static List<JsonConverterType> PropertiesJSONConverterRef(JToken token, JObject root)
+        private static List<JsonConverterType> PropertiesJSONConverterRef(JToken token, JObject root, bool genWithKeysFlag)
         {
             List<JsonConverterType> list = new List<JsonConverterType>();
 
@@ -113,12 +113,12 @@ namespace JsonConverter
             reference = reference.Replace('/', '.');
             JToken getReference = root.SelectToken(reference + "..properties");
 
-            PropertiesJSONConverterRec(getReference, root, list, "");
+            PropertiesJSONConverterRec(getReference, root, list, "", genWithKeysFlag);
 
             return list;
         }
 
-        private static void PropertiesJSONConverterRec(JToken token, JObject root, List<JsonConverterType> list, String cat)
+        private static void PropertiesJSONConverterRec(JToken token, JObject root, List<JsonConverterType> list, String cat, bool genWithKeysFlag)
         {
             //String reference = token.Value<String>("$ref");
 
@@ -148,7 +148,7 @@ namespace JsonConverter
                     reference = reference.Replace('/', '.');
                     JToken getReference = root.SelectToken(reference + "..properties");
 
-                    PropertiesJSONConverterRec(getReference, root, list, indexname + ".");
+                    PropertiesJSONConverterRec(getReference, root, list, indexname + ".", genWithKeysFlag);
                 }
                 else
                 {
@@ -157,7 +157,10 @@ namespace JsonConverter
                         String nametype = tempToken.Value<String>();
                         if (!nametype.ToUpper().Equals("ARRAY"))
                         {
-                            list.Add(new JsonConverterType(propertyname, cat + indexname, nametype));
+                            if (!(!cat.Equals("") && propertyname.ToUpper().Equals("ID") && !genWithKeysFlag))
+                            {
+                                list.Add(new JsonConverterType(propertyname, cat + indexname, nametype));
+                            }
                         }
                     }
                 }
